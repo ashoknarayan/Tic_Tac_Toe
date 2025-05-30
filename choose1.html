@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Choose Start - One Player</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      text-align: center;
+      padding-top: 50px;
+      font-family: sans-serif;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 20px;
+      font-size: 20px;
+      background: #222;
+      border: 2px solid #555;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #333;
+    }
+    .back-btn {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Who Starts?</h1>
+  <button onclick="location.href='oneplayer.html?start=you'">You</button>
+  <button onclick="location.href='oneplayer.html?start=bot'">Bot</button>
+  <br>
+  <button class="back-btn" onclick="location.href='index.html'">Back</button>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>One Player Mode</title>
+  <style>
+    body {
+      background: #111;
+      color: white;
+      text-align: center;
+      font-family: sans-serif;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      margin: 50px auto;
+      width: 320px;
+    }
+    .cell {
+      background: #222;
+      border: 2px solid #444;
+      font-size: 32px;
+      height: 100px;
+      cursor: pointer;
+      color: white;
+    }
+    .cell:disabled {
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+<h1>One Player</h1>
+<div class="board" id="board"></div>
+
+<button id="homeBtn" onclick="location.href='choose1.html'" 
+  style="
+    padding: 10px 20px;
+    font-size: 18px;
+    margin: 10px auto;
+    display: block;
+    background: #222;
+    border: 2px solid #555;
+    color: white;
+    cursor: pointer;
+  "
+>
+  Back
+</button>
+
+<p id="message"></p>
+<script>
+  const board = document.getElementById("board");
+  const message = document.getElementById("message");
+  const urlParams = new URLSearchParams(window.location.search);
+  const start = urlParams.get('start');
+  let cells = [];
+  let gameOver = false;
+
+  function createBoard() {
+    board.innerHTML = "";
+    cells = [];
+    gameOver = false;
+    for (let i = 0; i < 9; i++) {
+      const btn = document.createElement("button");
+      btn.classList.add("cell");
+      btn.addEventListener("click", () => playerMove(i));
+      board.appendChild(btn);
+      cells.push(btn);
+    }
+    if (start === 'bot') botMove();
+  }
+
+  function playerMove(index) {
+    if (gameOver || cells[index].textContent !== "") return;
+    cells[index].textContent = "X";
+    cells[index].disabled = true;
+    if (checkWin("X")) return endGame("You win!");
+    if (isDraw()) return endGame("It's a draw!");
+    setTimeout(botMove, 300);
+  }
+
+  function botMove() {
+    const b = cells.map(c => c.textContent);
+    let move = -1;
+
+    // Win if possible
+    move = findBest("O");
+    if (move === -1) move = findBest("X");
+    if (move === -1) {
+      const empty = cells.map((c, i) => c.textContent === "" ? i : -1).filter(i => i !== -1);
+      move = empty[Math.floor(Math.random() * empty.length)];
+    }
+
+    cells[move].textContent = "O";
+    cells[move].disabled = true;
+    if (checkWin("O")) return endGame("Bot wins!");
+    if (isDraw()) return endGame("It's a draw!");
+  }
+
+  function findBest(player) {
+    const b = cells.map(c => c.textContent);
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for (let [a,b1,c] of wins) {
+      const line = [b[a], b[b1], b[c]];
+      const count = line.filter(v => v === player).length;
+      const empty = [a,b1,c].find(i => b[i] === "");
+      if (count === 2 && empty !== undefined) return empty;
+    }
+    return -1;
+  }
+
+  function checkWin(p) {
+    const b = cells.map(c => c.textContent);
+    const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    return wins.some(([a,b1,c]) => b[a] === p && b[b1] === p && b[c] === p);
+  }
+
+  function isDraw() {
+    return cells.every(c => c.textContent !== "");
+  }
+
+  function endGame(msg) {
+    gameOver = true;
+    setTimeout(() => {
+      alert(msg);
+      resetGame();
+    }, 200);
+  }
+
+  function resetGame() {
+    createBoard();
+  }
+
+  createBoard();
+</script>
+</body>
+</html>

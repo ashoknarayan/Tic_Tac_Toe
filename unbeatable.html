@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Unbeatable Mode</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #111;
+      color: #eee;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      margin: 50px auto;
+      width: 320px;
+    }
+    .cell {
+      background: #222;
+      border: 2px solid #444;
+      font-size: 32px;
+      height: 100px;
+      cursor: pointer;
+      color: white;
+    }
+    .cell:disabled {
+      cursor: default;
+      color: #bbb;
+    }
+    #homeBtn {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+      background: #222;
+      border: 2px solid #555;
+      color: white;
+      cursor: pointer;
+    }
+    #homeBtn:hover {
+      background: #333;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Unbeatable Mode</h1>
+<div class="board" id="board"></div>
+<p id="message"></p>
+<button id="homeBtn" onclick="location.href='choose2.html'">Back</button>
+
+<script>
+  const board = document.getElementById("board");
+  const message = document.getElementById("message");
+
+  let cells = [];
+  let gameOver = false;
+  let playerSymbol = "X";
+  let botSymbol = "O";
+  let currentTurn;  // "player" or "bot"
+
+  function createBoard() {
+    for (let i = 0; i < 9; i++) {
+      const btn = document.createElement("button");
+      btn.classList.add("cell");
+      btn.addEventListener("click", () => playerMove(i));
+      board.appendChild(btn);
+      cells.push(btn);
+    }
+  }
+
+  function playerMove(index) {
+    if (gameOver || cells[index].textContent !== "" || currentTurn !== "player") return;
+
+    cells[index].textContent = playerSymbol;
+    cells[index].disabled = true;
+
+    if (checkWin(playerSymbol)) return endGame("You win!");
+    if (isDraw()) return endGame("It's a draw!");
+
+    currentTurn = "bot";
+    setTimeout(botMove, 400);
+  }
+
+  function botMove() {
+    const best = findBestMove();
+    if (best !== -1) {
+      cells[best].textContent = botSymbol;
+      cells[best].disabled = true;
+    }
+    if (checkWin(botSymbol)) return endGame("Computer wins!");
+    if (isDraw()) return endGame("It's a draw!");
+
+    currentTurn = "player";
+    message.textContent = "";
+  }
+
+  function checkWin(player) {
+    const b = cells.map(c => c.textContent);
+    const wins = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+    return wins.some(([a,b1,c]) => b[a] === player && b[b1] === player && b[c] === player);
+  }
+
+  function isDraw() {
+    return cells.every(c => c.textContent !== "");
+  }
+
+  function endGame(msg) {
+    gameOver = true;
+    cells.forEach(c => c.disabled = true);
+    setTimeout(() => {
+      alert(msg);
+      resetGame();
+    }, 300);
+  }
+
+  function resetGame() {
+    cells.forEach(cell => {
+      cell.textContent = "";
+      cell.disabled = false;
+    });
+    gameOver = false;
+    message.textContent = "";
+    currentTurn = playerStarts ? "player" : "bot";
+    if (currentTurn === "bot") {
+      setTimeout(botMove, 400);
+    }
+  }
+
+  // Minimax with alpha-beta pruning
+  function findBestMove() {
+    let bestVal = -Infinity;
+    let move = -1;
+
+    for (let i = 0; i < 9; i++) {
+      if (cells[i].textContent === "") {
+        cells[i].textContent = botSymbol;
+        let moveVal = minimax(0, false, -Infinity, Infinity);
+        cells[i].textContent = "";
+        if (moveVal > bestVal) {
+          bestVal = moveVal;
+          move = i;
+        }
+      }
+    }
+    return move;
+  }
+
+  function minimax(depth, isMax, alpha, beta) {
+    if (checkWin(botSymbol)) return 10 - depth;
+    if (checkWin(playerSymbol)) return depth - 10;
+    if (isDraw()) return 0;
+
+    if (isMax) {
+      let maxEval = -Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (cells[i].textContent === "") {
+          cells[i].textContent = botSymbol;
+          let evalScore = minimax(depth + 1, false, alpha, beta);
+          cells[i].textContent = "";
+          maxEval = Math.max(maxEval, evalScore);
+          alpha = Math.max(alpha, evalScore);
+          if (beta <= alpha) break;
+        }
+      }
+      return maxEval;
+    } else {
+      let minEval = Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (cells[i].textContent === "") {
+          cells[i].textContent = playerSymbol;
+          let evalScore = minimax(depth + 1, true, alpha, beta);
+          cells[i].textContent = "";
+          minEval = Math.min(minEval, evalScore);
+          beta = Math.min(beta, evalScore);
+          if (beta <= alpha) break;
+        }
+      }
+      return minEval;
+    }
+  }
+
+  // Read who starts from URL query parameter ?start=you or ?start=bot
+  function getStartPlayerFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const start = params.get("start");
+    if (start === "you") return true;
+    if (start === "bot") return false;
+    return true; // default to player starts
+  }
+
+  const playerStarts = getStartPlayerFromURL();
+
+  createBoard();
+
+  currentTurn = playerStarts ? "player" : "bot";
+
+  if (currentTurn === "bot") {
+    setTimeout(botMove, 400);
+  }
+</script>
+
+</body>
+</html>
